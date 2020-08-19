@@ -31,8 +31,8 @@ void print_help_and_exit()
   MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
 }
 
-void parse_command_line(int argc, char** argv, bool& dualize, int64_t& upper_dim, std::string& input_filename, 
-                        std::string& output_filename)
+void parse_command_line(int argc, char** argv, bool& dualize, bool& ascii_output, int64_t& upper_dim,
+        std::string& input_filename, std::string& output_filename)
 {
   if (argc < 3)
     print_help_and_exit();
@@ -51,6 +51,10 @@ void parse_command_line(int argc, char** argv, bool& dualize, int64_t& upper_dim
     {
       dualize = true;
     }
+    else if (option == "--ascii_output")
+    {
+        ascii_output = true;
+    }
     else if (option == "--upper_dim")
     {
       idx++;
@@ -67,7 +71,8 @@ void parse_command_line(int argc, char** argv, bool& dualize, int64_t& upper_dim
 }
 
 template< typename Complex >
-void create_phat_filtration(const std::string& input_filename, bool dualize, int64_t upper_dim, const std::string& output_filename)
+void create_phat_filtration(const std::string& input_filename, bool dualize, bool ascii_output,
+        int64_t upper_dim, const std::string& output_filename)
 {
   Complex complex;
   complex.load_binary(input_filename, upper_dim);
@@ -83,7 +88,7 @@ void create_phat_filtration(const std::string& input_filename, bool dualize, int
   for (int64_t cur_dim = 0; cur_dim <= complex.get_max_dim(); cur_dim++)
   {
     dipha::data_structures::flat_column_stack unreduced_columns;
-    dipha::algorithms::generate_unreduced_columns(complex, filtration_to_cell_map, cell_to_filtration_map, cur_dim, dualize, 
+    dipha::algorithms::generate_unreduced_columns(complex, filtration_to_cell_map, cell_to_filtration_map, cur_dim, dualize,
                                                   unreduced_columns);
     dipha::data_structures::heap_column col;
     while (!unreduced_columns.empty())
@@ -96,18 +101,34 @@ void create_phat_filtration(const std::string& input_filename, bool dualize, int
     }
   }
 
-  std::ofstream output_stream(output_filename.c_str(), std::ios_base::binary | std::ios_base::out);
-  output_stream.write((char*)&nr_columns, sizeof(int64_t));
-  for (int64_t cur_col = 0; cur_col < nr_columns; cur_col++)
+  std::ofstream output_stream;
+  if (ascii_output)
   {
-    int64_t cur_dim = dims[cur_col];
-    output_stream.write((char*)&cur_dim, sizeof(int64_t));
-    int64_t cur_nr_rows = matrix[cur_col].size();
-    output_stream.write((char*)&cur_nr_rows, sizeof(int64_t));
-    for (int64_t cur_row_idx = 0; cur_row_idx < cur_nr_rows; cur_row_idx++)
+    output_stream = std::ofstream(output_filename.c_str(), std::ios_base::out);
+    for (int64_t cur_col = 0; cur_col < nr_columns; cur_col++)
     {
-      int64_t cur_row = matrix[cur_col][cur_row_idx];
-      output_stream.write((char*)&cur_row, sizeof(int64_t));
+      output_stream << matrix[cur_col].size();
+      for (size_t j = 0; j < matrix[cur_col].size(); ++j)
+      {
+        output_stream << " " << matrix[cur_col][j];
+      }
+      output_stream << "\n";
+    }
+  } else
+  {
+    output_stream = std::ofstream(output_filename.c_str(), std::ios_base::binary | std::ios_base::out);
+    output_stream.write((char*)&nr_columns, sizeof(int64_t));
+    for (int64_t cur_col = 0; cur_col < nr_columns; cur_col++)
+    {
+      int64_t cur_dim = dims[cur_col];
+      output_stream.write((char*)&cur_dim, sizeof(int64_t));
+      int64_t cur_nr_rows = matrix[cur_col].size();
+      output_stream.write((char*)&cur_nr_rows, sizeof(int64_t));
+      for (int64_t cur_row_idx = 0; cur_row_idx < cur_nr_rows; cur_row_idx++)
+      {
+        int64_t cur_row = matrix[cur_col][cur_row_idx];
+        output_stream.write((char*)&cur_row, sizeof(int64_t));
+      }
     }
   }
 
@@ -128,8 +149,9 @@ int main(int argc, char** argv)
   std::string input_filename; // name of file that contains the weighted cell complex
   std::string output_filename; // name of file that will contain the PHAT filtration
   bool dualize = false; // primal / dual computation toggle
+  bool ascii_output = false; // if true, output in text format
   int64_t upper_dim = std::numeric_limits< int64_t >::max();
-  parse_command_line(argc, argv, dualize, upper_dim, input_filename, output_filename);
+  parse_command_line(argc, argv, dualize, ascii_output, upper_dim, input_filename, output_filename);
 
   switch (dipha::file_types::get_file_type(input_filename))
   {
@@ -139,7 +161,8 @@ int main(int argc, char** argv)
       dipha::mpi_utils::error_printer_if_root() << "upper_dim not supported for this input type IMAGE_DATA" << std::endl;
       MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
     }
-    create_phat_filtration< dipha::inputs::weighted_cubical_complex >(input_filename, dualize, upper_dim, output_filename);
+    create_phat_filtration< dipha::inputs::weighted_cubical_complex >(input_filename, dualize, ascii_output,
+            upper_dim, output_filename);
     break;
   case dipha::file_types::WEIGHTED_BOUNDARY_MATRIX:
     if (upper_dim != std::numeric_limits< int64_t >::max())
@@ -147,13 +170,16 @@ int main(int argc, char** argv)
       dipha::mpi_utils::error_printer_if_root() << "upper_dim not supported for this input type WEIGHTED_BOUNDARY_MATRIX" << std::endl;
       MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
     }
-    create_phat_filtration< dipha::inputs::weighted_explicit_complex >(input_filename, dualize, upper_dim, output_filename);
+    create_phat_filtration< dipha::inputs::weighted_explicit_complex >(input_filename, dualize, ascii_output,
+            upper_dim, output_filename);
     break;
   case dipha::file_types::DISTANCE_MATRIX:
-    create_phat_filtration< dipha::inputs::full_rips_complex >(input_filename, dualize, upper_dim, output_filename);
+    create_phat_filtration< dipha::inputs::full_rips_complex >(input_filename, dualize, ascii_output,
+            upper_dim, output_filename);
     break;
   case dipha::file_types::SPARSE_DISTANCE_MATRIX:
-    create_phat_filtration< dipha::inputs::sparse_rips_complex >(input_filename, dualize, upper_dim, output_filename);
+    create_phat_filtration< dipha::inputs::sparse_rips_complex >(input_filename, dualize, ascii_output,
+            upper_dim, output_filename);
     break;
   default:
     dipha::mpi_utils::error_printer_if_root() << "Unknown complex type in DIPHA file" << input_filename << std::endl;
