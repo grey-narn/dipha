@@ -17,19 +17,14 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with DIPHA.  If not, see <http://www.gnu.org/licenses/>.
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.4)
 
 project("Dipha")
 
 set(CMAKE_BUILD_TYPE "Release")
 
-if(CMAKE_COMPILER_IS_GNUCXX)
-    add_definitions(-std=c++11)
-endif()
-
-if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-    add_definitions(-std=c++11 -w)
-endif()
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 FIND_PACKAGE(MPI REQUIRED)
 
@@ -56,6 +51,8 @@ target_link_libraries(create_phat_filtration ${MPI_LIBRARIES})
 
 add_executable (full_to_sparse_distance_matrix src/full_to_sparse_distance_matrix.cpp)
 target_link_libraries(full_to_sparse_distance_matrix ${MPI_LIBRARIES})
+
+add_executable (diagram_to_text src/diagram_to_text.cpp include/dipha/file_types.h)
 
 source_group(Header\ Files FILES ${dipha_general_includes})
 source_group(Header\ Files\\inputs FILES ${dipha_input_includes})
