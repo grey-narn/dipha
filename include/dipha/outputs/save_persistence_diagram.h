@@ -25,7 +25,7 @@ namespace dipha
 {
   namespace outputs
   {
-    /* file format: file_types::DIPHA % file_types::PERSISTENCE_DIAGRAM % global_num_pairs (N) % birth_dim_1 % birth_value_1 
+    /* file format: file_types::DIPHA % file_types::PERSISTENCE_DIAGRAM % global_num_pairs (N) % birth_dim_1 % birth_value_1
                     % death_value_1 % ... % birth_dim_N % birth_value_N % death_value_N
                     (birth_values and death_values are of type double, the rest is int64_t) */
     template< typename Complex >
@@ -36,7 +36,8 @@ namespace dipha
                                   bool dualized = false,
                                   int64_t upper_dim = std::numeric_limits< int64_t >::max(),
                                   double upper_value = std::numeric_limits< double >::max(),
-                                  bool without_top_dimension_essentials = true)
+                                  bool without_top_dimension_essentials = true,
+                                  bool sort_diagrams = false)
     {
       MPI_File file = mpi_utils::file_open_read_write(filename);
 
@@ -227,46 +228,51 @@ namespace dipha
       /// now sort the pairs to simplify regression tests etc.
       MPI_Barrier(MPI_COMM_WORLD);
 
-      /// be careful with tiny files: psort needs all processes to have work to do ...
-      if (global_num_pairs < mpi_utils::get_num_processes() * mpi_utils::get_num_processes())
+      if (sort_diagrams)
       {
-        if (mpi_utils::is_root())
+        /// be careful with tiny files: psort needs all processes to have work to do ...
+        if (global_num_pairs < mpi_utils::get_num_processes() * mpi_utils::get_num_processes())
         {
-          std::vector< diagram_entry_type > global_dims_and_pairs;
-          MPI_Offset offset = 3 * sizeof(int64_t);
-          mpi_utils::file_read_at_vector(file, offset, global_num_pairs, global_dims_and_pairs);
-          std::sort(global_dims_and_pairs.begin(), global_dims_and_pairs.end());
-          mpi_utils::file_write_at_vector(file, offset, global_dims_and_pairs);
+          if (mpi_utils::is_root())
+          {
+            std::vector< diagram_entry_type > global_dims_and_pairs;
+            MPI_Offset offset = 3 * sizeof(int64_t);
+            mpi_utils::file_read_at_vector(file, offset, global_num_pairs, global_dims_and_pairs);
+            std::sort(global_dims_and_pairs.begin(), global_dims_and_pairs.end());
+            mpi_utils::file_write_at_vector(file, offset, global_dims_and_pairs);
+          }
         }
-      }
-      else
-      {
-        const int64_t local_begin = element_distribution::get_local_begin(global_num_pairs);
-        const int64_t local_num_pairs = element_distribution::get_local_end(global_num_pairs) - local_begin;
-
-        std::vector< diagram_entry_type > local_dims_and_pairs;
-
-        MPI_Offset offset = sizeof(int64_t) * 3 + local_begin * sizeof(diagram_entry_type);
-        mpi_utils::file_read_at_vector(file, offset, local_num_pairs, local_dims_and_pairs);
-
-        // psort unfortunately uses long for the size. This will cause problems on Win64 for large data
-        std::vector< long > cell_distribution;
-        int num_processes = mpi_utils::get_num_processes();
-        for (int cur_rank = 0; cur_rank < num_processes; cur_rank++)
+        else
         {
-          const int64_t local_begin = element_distribution::get_local_begin(global_num_pairs, cur_rank);
-          const int64_t local_end = element_distribution::get_local_end(global_num_pairs, cur_rank);
-          cell_distribution.push_back((long)(local_end - local_begin));
-        }
-          
-        p_sort::parallel_sort(local_dims_and_pairs.begin(), local_dims_and_pairs.end(), cell_distribution.data(), MPI_COMM_WORLD);
+          const int64_t local_begin = element_distribution::get_local_begin(global_num_pairs);
+          const int64_t local_num_pairs = element_distribution::get_local_end(global_num_pairs) - local_begin;
 
-        // need to make sure that above read has completeted before we overwrite
-        MPI_Barrier(MPI_COMM_WORLD);
-        mpi_utils::file_write_at_vector(file, offset, local_dims_and_pairs);
-      }
+          std::vector< diagram_entry_type > local_dims_and_pairs;
+
+          MPI_Offset offset = sizeof(int64_t) * 3 + local_begin * sizeof(diagram_entry_type);
+          mpi_utils::file_read_at_vector(file, offset, local_num_pairs, local_dims_and_pairs);
+
+          // psort unfortunately uses long for the size. This will cause problems on Win64 for large data
+          std::vector< long > cell_distribution;
+          int num_processes = mpi_utils::get_num_processes();
+          for (int cur_rank = 0; cur_rank < num_processes; cur_rank++)
+          {
+            const int64_t local_begin = element_distribution::get_local_begin(global_num_pairs, cur_rank);
+            const int64_t local_end = element_distribution::get_local_end(global_num_pairs, cur_rank);
+            cell_distribution.push_back((long)(local_end - local_begin));
+          }
+
+          p_sort::parallel_sort(local_dims_and_pairs.begin(), local_dims_and_pairs.end(), cell_distribution.data(), MPI_COMM_WORLD);
+
+          // need to make sure that above read has completeted before we overwrite
+          MPI_Barrier(MPI_COMM_WORLD);
+          mpi_utils::file_write_at_vector(file, offset, local_dims_and_pairs);
+        }
+
+      } // end sorting block
 
       MPI_File_close(&file);
-    }
-  }
-}
+
+    } // end save_persistence_diagram
+  } // end namespace outputs
+} // end namespace dipha

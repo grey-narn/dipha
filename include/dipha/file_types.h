@@ -48,7 +48,7 @@ namespace dipha
     {
       if (!is_dipha_file(filename))
       {
-        mpi_utils::error_printer_if_root() << filename << " is not a proper DIPHA file (first int64_t does not match magic number)" 
+        mpi_utils::error_printer_if_root() << filename << " is not a proper DIPHA file (first int64_t does not match magic number)"
                                            << std::endl;
         MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
       }

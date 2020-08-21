@@ -32,7 +32,7 @@ void print_help_and_exit()
   MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
 }
 
-void parse_command_line(int argc, char** argv, bool& benchmark, bool& dualize, int64_t& upper_dim, std::string& input_filename, 
+void parse_command_line(int argc, char** argv, bool& benchmark, bool& dualize, int64_t& upper_dim, std::string& input_filename,
                         std::string& output_filename)
 {
 
@@ -82,7 +82,7 @@ void compute(const std::string& input_filename, bool dualize, int64_t upper_dim,
   dipha::data_structures::distributed_vector< int64_t > filtration_to_cell_map;
   dipha::data_structures::write_once_column_array reduced_columns;
   dipha::algorithms::compute_reduced_columns(complex, dualize, upper_dim, filtration_to_cell_map, reduced_columns);
-  DIPHA_MACROS_BENCHMARK(dipha::outputs::save_persistence_diagram(output_filename, complex, filtration_to_cell_map, reduced_columns, 
+  DIPHA_MACROS_BENCHMARK(dipha::outputs::save_persistence_diagram(output_filename, complex, filtration_to_cell_map, reduced_columns,
                                                                   dualize, upper_dim); );
 }
 
@@ -109,12 +109,12 @@ int main(int argc, char** argv)
 
     dipha::mpi_utils::cout_if_root() << std::endl << "upper_dim: " << upper_dim << std::endl;
 
-    dipha::mpi_utils::cout_if_root() << std::endl << "Number of processes used: " << std::endl << dipha::mpi_utils::get_num_processes() 
+    dipha::mpi_utils::cout_if_root() << std::endl << "Number of processes used: " << std::endl << dipha::mpi_utils::get_num_processes()
                                      << std::endl;
 
     dipha::mpi_utils::cout_if_root() << std::endl << "Detailed information for rank 0:" << std::endl;
 
-    dipha::mpi_utils::cout_if_root() << std::setw(11) << "time" << std::setw(13) << "prior mem" << std::setw(13) << "peak mem" 
+    dipha::mpi_utils::cout_if_root() << std::setw(11) << "time" << std::setw(13) << "prior mem" << std::setw(13) << "peak mem"
                                      << std::setw(13) << "bytes recv" << std::endl;
   }
 
@@ -151,7 +151,7 @@ int main(int argc, char** argv)
     std::vector< int64_t > peak_mem_per_rank(dipha::mpi_utils::get_num_processes());
     MPI_Gather(&peak_mem, 1, MPI_LONG_LONG, peak_mem_per_rank.data(), 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
     dipha::mpi_utils::cout_if_root() << std::endl << "Overall peak mem in GB of all ranks: " << std::endl;
-    dipha::mpi_utils::cout_if_root() << (double)*std::max_element(peak_mem_per_rank.begin(), peak_mem_per_rank.end()) / 1024.0 
+    dipha::mpi_utils::cout_if_root() << (double)*std::max_element(peak_mem_per_rank.begin(), peak_mem_per_rank.end()) / 1024.0
                                      << std::endl;
 
     dipha::mpi_utils::cout_if_root() << std::endl << "Individual peak mem in GB of per rank: " << std::endl;
@@ -163,12 +163,12 @@ int main(int argc, char** argv)
     std::vector< int64_t > bytes_received_per_rank(dipha::mpi_utils::get_num_processes());
     MPI_Gather(&dipha::globals::bytes_received, 1, MPI_LONG_LONG, bytes_received_per_rank.data(), 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
 
-    dipha::mpi_utils::cout_if_root() << std::endl << "Maximal communication traffic (without sorting) in GB between any pair of nodes:" 
+    dipha::mpi_utils::cout_if_root() << std::endl << "Maximal communication traffic (without sorting) in GB between any pair of nodes:"
                                      << std::endl;
     const int64_t max_num_MB_traffic = *std::max_element(bytes_received_per_rank.begin(), bytes_received_per_rank.end()) >> 20;
     dipha::mpi_utils::cout_if_root() << std::setprecision(1) << (double)(max_num_MB_traffic) / 1024.0 << std::endl;
 
-    dipha::mpi_utils::cout_if_root() << std::endl << "Total communication traffic (without sorting) in GB between all pairs of nodes:" 
+    dipha::mpi_utils::cout_if_root() << std::endl << "Total communication traffic (without sorting) in GB between all pairs of nodes:"
                                      << std::endl;
     const int64_t total_num_MB_traffic = std::accumulate(bytes_received_per_rank.begin(), bytes_received_per_rank.end(), 0LL) >> 20;
     dipha::mpi_utils::cout_if_root() << std::setprecision(1) << (double)(total_num_MB_traffic) / 1024.0 << std::endl;
