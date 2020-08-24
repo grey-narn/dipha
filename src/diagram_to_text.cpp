@@ -8,7 +8,7 @@
 
 using namespace dipha;
 
-using DgmPoint = std::pair<double, double>;
+using DgmPoint = std::pair<dipha_real, dipha_real>;
 using Dgm = std::vector<DgmPoint>;
 
 
@@ -55,11 +55,11 @@ int main(int argc, char** argv)
 
     for(int64_t pair_index = 0; pair_index < n_pairs; ++pair_index) {
         int64_t dim;
-        double birth, death;
+        dipha_real birth, death;
 
         in.read(reinterpret_cast<char*>(&dim), sizeof(int64_t));
-        in.read(reinterpret_cast<char*>(&birth), sizeof(double));
-        in.read(reinterpret_cast<char*>(&death), sizeof(double));
+        in.read(reinterpret_cast<char*>(&birth), sizeof(dipha_real));
+        in.read(reinterpret_cast<char*>(&death), sizeof(dipha_real));
         dim_to_diagram[dim].emplace_back(birth, death);
         //std::cout << "read pair in dim " << dim << " (" << birth << ", " << death << ")" << std::endl;
     }
@@ -73,7 +73,7 @@ int main(int argc, char** argv)
             std::cerr << "cannot open file for writing: " << dgm_fname << std::endl;
             return -1;
         }
-        out.precision(std::numeric_limits<double>::digits10 + 1);
+        out.precision(std::numeric_limits<dipha_real>::digits10 + 1);
         for(const auto& p : dim_dgm.second) {
             out << p.first << " " << p.second << "\n";
         }

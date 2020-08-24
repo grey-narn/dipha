@@ -19,6 +19,8 @@ along with DIPHA.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include <dipha/includes.h>
 
+using dipha::dipha_real;
+
 void print_help()
 {
   std::cerr << "Usage: " << "dualize " << "input_filename output_filename" << std::endl;
@@ -57,7 +59,7 @@ int main(int argc, char** argv)
   MPI_Init(&argc, &argv);
 
   // take time at beggining of execution
-  double time_at_start = MPI_Wtime();
+  dipha_real time_at_start = static_cast<dipha_real>(MPI_Wtime());
 
   std::string input_filename; // name of file that contains the weighted cell complex
   std::string output_filename; // name of file that will contain the persistence diagram
@@ -75,7 +77,7 @@ int main(int argc, char** argv)
   }
   else
   {
-    dipha::mpi_utils::error_printer_if_root() << "Input file " << input_filename << " is not of type WEIGHTED_BOUNDARY_MATRIX" 
+    dipha::mpi_utils::error_printer_if_root() << "Input file " << input_filename << " is not of type WEIGHTED_BOUNDARY_MATRIX"
                                               << std::endl;
     MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
   }

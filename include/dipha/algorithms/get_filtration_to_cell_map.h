@@ -35,7 +35,7 @@ namespace dipha
       const int64_t local_end = element_distribution::get_local_end(global_num_cells);
       const int64_t local_num_cells = local_end - local_begin;
 
-      typedef std::pair< double, std::pair< int64_t, int64_t > > sort_value_type;
+      typedef std::pair< dipha_real, std::pair< int64_t, int64_t > > sort_value_type;
       std::vector< sort_value_type > filtration(local_num_cells);
       for (int64_t cur_cell = local_begin; cur_cell < local_end; cur_cell++)
       {
@@ -48,14 +48,14 @@ namespace dipha
       std::vector< long > cell_distribution;
       int num_processes = mpi_utils::get_num_processes();
       for (int cur_rank = 0; cur_rank < num_processes; cur_rank++)
-        cell_distribution.push_back((long)(element_distribution::get_local_end(global_num_cells, cur_rank) 
+        cell_distribution.push_back((long)(element_distribution::get_local_end(global_num_cells, cur_rank)
                                            - element_distribution::get_local_begin(global_num_cells, cur_rank)));
 
       if (dualize)
-        p_sort::parallel_sort(filtration.begin(), filtration.end(), std::greater< sort_value_type >(), 
+        p_sort::parallel_sort(filtration.begin(), filtration.end(), std::greater< sort_value_type >(),
                               cell_distribution.data(), MPI_COMM_WORLD);
       else
-        p_sort::parallel_sort(filtration.begin(), filtration.end(), std::less< sort_value_type >(), 
+        p_sort::parallel_sort(filtration.begin(), filtration.end(), std::less< sort_value_type >(),
                               cell_distribution.data(), MPI_COMM_WORLD);
 
       filtration_to_cell_map.init(global_num_cells);

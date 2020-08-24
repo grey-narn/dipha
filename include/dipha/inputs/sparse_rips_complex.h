@@ -36,15 +36,15 @@ namespace dipha
       {
 
       public:
-        bool operator() (const std::pair<int64_t, double>& a, const std::pair<int64_t, double>& b)
+        bool operator() (const std::pair<int64_t, dipha_real>& a, const std::pair<int64_t, dipha_real>& b)
         {
           return a.first < b.first;
         }
-        bool operator() (int64_t a, const std::pair<int64_t, double>& b)
+        bool operator() (int64_t a, const std::pair<int64_t, dipha_real>& b)
         {
           return a < b.first;
         }
-        bool operator() (const std::pair<int64_t, double>& a, int64_t b)
+        bool operator() (const std::pair<int64_t, dipha_real>& a, int64_t b)
         {
           return a.first < b;
         }
@@ -58,7 +58,7 @@ namespace dipha
       int64_t _m_no_points;
 
 
-      std::vector<std::vector< std::pair<int64_t, double> > > _m_coboundary_list;
+      std::vector<std::vector< std::pair<int64_t, dipha_real> > > _m_coboundary_list;
 
       Compare_1st compare_1st;
 
@@ -70,7 +70,7 @@ namespace dipha
 #define PRECOMPUTE_VALUES 1
 
 #if PRECOMPUTE_VALUES
-      std::vector< double > _m_values_in_range;
+      std::vector< dipha_real > _m_values_in_range;
 #endif
 
       std::vector<std::vector<int64_t> > _m_binomials;
@@ -124,7 +124,7 @@ namespace dipha
 
         offset += no_entries*sizeof(int64_t);
 
-        std::vector<double> list_values;
+        std::vector<dipha_real> list_values;
         mpi_utils::file_read_at_vector(file, offset, no_entries, list_values);
 
         _m_coboundary_list.resize(_m_no_points);
@@ -156,12 +156,12 @@ namespace dipha
 
     public:
 
-      std::vector< std::pair<int64_t, double> >::const_iterator row_begin(int64_t idx) const
+      std::vector< std::pair<int64_t, dipha_real> >::const_iterator row_begin(int64_t idx) const
       {
         return _m_coboundary_list[idx].begin();
       }
 
-      std::vector< std::pair<int64_t, double> >::const_iterator row_end(int64_t idx) const
+      std::vector< std::pair<int64_t, dipha_real> >::const_iterator row_end(int64_t idx) const
       {
         return _m_coboundary_list[idx].end();
       }
@@ -212,12 +212,12 @@ namespace dipha
 
         int64_t rows_to_check = vertex_indices.size();
 
-        std::vector<std::pair<int64_t, double> > coboundary_vertices_1, coboundary_vertices_2;
-        std::vector<std::pair<int64_t, double> >* coboundary_pointer_1, *coboundary_pointer_2, *help;
+        std::vector<std::pair<int64_t, dipha_real> > coboundary_vertices_1, coboundary_vertices_2;
+        std::vector<std::pair<int64_t, dipha_real> >* coboundary_pointer_1, *coboundary_pointer_2, *help;
 
-        auto start_of_search = scan_full_column ? _m_coboundary_list[vertex_indices[0]].begin() 
-                                                : std::upper_bound(_m_coboundary_list[vertex_indices[0]].begin(), 
-                                                                   _m_coboundary_list[vertex_indices[0]].end(), 
+        auto start_of_search = scan_full_column ? _m_coboundary_list[vertex_indices[0]].begin()
+                                                : std::upper_bound(_m_coboundary_list[vertex_indices[0]].begin(),
+                                                                   _m_coboundary_list[vertex_indices[0]].end(),
                                                                    vertex_indices[0], compare_1st);
 
         std::copy(start_of_search, _m_coboundary_list[vertex_indices[0]].end(), std::back_inserter(coboundary_vertices_1));
@@ -318,7 +318,7 @@ namespace dipha
           std::vector< MPI_Request > queries_requests;
           for (int process_id = 0; process_id < num_processes; process_id++)
           {
-            mpi_utils::non_blocking_send_vector(codimension_one_full_indices_send_buffer[process_id], process_id, 
+            mpi_utils::non_blocking_send_vector(codimension_one_full_indices_send_buffer[process_id], process_id,
                                                 mpi_utils::MSG_REPORT_INDICES_OF_SPARSE_RIPS, queries_requests);
           }
 
@@ -331,7 +331,7 @@ namespace dipha
           for (int process_id = 0; process_id < num_processes; process_id++)
           {
             int source = (mpi_utils::get_rank() + process_id) % num_processes;
-            mpi_utils::receive_vector(codimension_one_full_indices_receive_buffer[source], source, 
+            mpi_utils::receive_vector(codimension_one_full_indices_receive_buffer[source], source,
                                       mpi_utils::MSG_REPORT_INDICES_OF_SPARSE_RIPS);
             std::copy(codimension_one_full_indices_receive_buffer[source].begin(),
                       codimension_one_full_indices_receive_buffer[source].end(),
@@ -359,7 +359,7 @@ namespace dipha
 
         for (int process_id = 0; process_id < num_processes; process_id++)
         {
-          mpi_utils::non_blocking_send_vector(wrap_no_of_local_simplices, process_id, mpi_utils::MSG_REPORT_INDICES_OF_SPARSE_RIPS, 
+          mpi_utils::non_blocking_send_vector(wrap_no_of_local_simplices, process_id, mpi_utils::MSG_REPORT_INDICES_OF_SPARSE_RIPS,
                                               queries_requests);
         }
 
@@ -395,14 +395,14 @@ namespace dipha
           int64_t sparse_idx = _m_breakpoints_local_indices[mpi_utils::get_rank()] + local_sparse_idx;
 
           int process_responsible_for_current = element_distribution::get_rank(_m_num_elements, sparse_idx);
-          //std::cout << mpi_utils::get_rank() << "Responsible is " << _m_num_elements << " " << local_sparse_idx << " " 
+          //std::cout << mpi_utils::get_rank() << "Responsible is " << _m_num_elements << " " << local_sparse_idx << " "
           //          << sparse_idx << " " <<  process_responsible_for_current << std::endl;
           send_buffers[process_responsible_for_current].push_back(_m_full_indices_in_range[local_sparse_idx]);
         }
 
         queries_requests.clear();
         for (int target = 0; target < num_processes; target++)
-          mpi_utils::non_blocking_send_vector(send_buffers[target], target, mpi_utils::MSG_SPARSE_RIPS_DISTRIBUTE_SIMPLICES, 
+          mpi_utils::non_blocking_send_vector(send_buffers[target], target, mpi_utils::MSG_SPARSE_RIPS_DISTRIBUTE_SIMPLICES,
                                                      queries_requests);
 
         std::vector< std::vector< int64_t> > queries_buffer;
@@ -447,7 +447,7 @@ namespace dipha
 
         for (int process_id = 0; process_id < num_processes; process_id++)
         {
-          mpi_utils::non_blocking_send_vector(wrap_maximal_global_idx, process_id, 
+          mpi_utils::non_blocking_send_vector(wrap_maximal_global_idx, process_id,
                                               mpi_utils::MSG_REPORT_MAXIMAL_GLOBAL_INDEX_IN_SPARSE_RIPS, queries_requests);
         }
 
@@ -459,7 +459,7 @@ namespace dipha
         for (int process_id = 0; process_id < num_processes; process_id++)
         {
           // Silly again: Receive using a vector of size one
-          mpi_utils::receive_vector(breakpoint_from_process, process_id, 
+          mpi_utils::receive_vector(breakpoint_from_process, process_id,
                                            mpi_utils::MSG_REPORT_MAXIMAL_GLOBAL_INDEX_IN_SPARSE_RIPS);
           assert(breakpoint_from_process.size() == 1);
           _m_breakpoints_local_indices.push_back(1 + breakpoint_from_process[0]);
@@ -480,7 +480,7 @@ namespace dipha
       {
         for (auto idx_it = _m_full_indices_in_range.begin(); idx_it != _m_full_indices_in_range.end(); idx_it++)
         {
-          double dist = _get_local_value_full_index(*idx_it);
+          dipha_real dist = _get_local_value_full_index(*idx_it);
           _m_values_in_range.push_back(dist);
         }
       }
@@ -516,7 +516,7 @@ namespace dipha
         int64_t local_begin = element_distribution::get_local_begin(_m_num_elements, process_id);
         /*
         if( sparse_idx >= element_distribution::get_local_end( _m_num_elements, process_id ) ) {
-          std::cout << mpi_utils::get_rank() << " " << "Got sparse_idx " << sparse_idx << ", but my range is " << local_begin << ", " 
+          std::cout << mpi_utils::get_rank() << " " << "Got sparse_idx " << sparse_idx << ", but my range is " << local_begin << ", "
                     << element_distribution::get_local_end( _m_num_elements, process_id ) << std::endl;
         }
         */
@@ -550,7 +550,7 @@ namespace dipha
         return k;
       }
 
-      double _get_local_value(int64_t idx) const
+      dipha_real _get_local_value(int64_t idx) const
       {
 #if PRECOMPUTE_VALUES
         int64_t local_idx = get_local_index_from_sparse_index(idx);
@@ -562,7 +562,7 @@ namespace dipha
       }
 
 
-      double _get_local_value_full_index(int64_t idx) const
+      dipha_real _get_local_value_full_index(int64_t idx) const
       {
         static std::vector<int64_t> points;
         points.clear();
@@ -642,7 +642,7 @@ namespace dipha
           }
         }
 
-        // Next, we need to ask for the sparse indices of all collected full indices 
+        // Next, we need to ask for the sparse indices of all collected full indices
         std::vector< std::vector< int64_t > > inner_queries_send_buffer;
         std::vector< std::vector< int64_t > > inner_queries_recv_buffer;
         // std::vector< std::vector< int64_t > > inner_answers_send_buffer;
@@ -670,11 +670,11 @@ namespace dipha
         // Send the queries now to ask for the sparse indices
         for (int process_id = 0; process_id < num_processes; process_id++)
         {
-          mpi_utils::non_blocking_send_vector(inner_queries_send_buffer[process_id], process_id, mpi_utils::MSG_QUERY_SPARSE_INDICES, 
+          mpi_utils::non_blocking_send_vector(inner_queries_send_buffer[process_id], process_id, mpi_utils::MSG_QUERY_SPARSE_INDICES,
                                               queries_requests);
         }
 
-        // Receive the query results 
+        // Receive the query results
 
         inner_queries_recv_buffer.resize(num_processes);
 
@@ -695,7 +695,7 @@ namespace dipha
           {
             query_buf = get_locally_sparse_from_full_index(query_buf);
           }
-          mpi_utils::non_blocking_send_vector(inner_queries_recv_buffer[source], source, mpi_utils::MSG_QUERY_SPARSE_INDICES, 
+          mpi_utils::non_blocking_send_vector(inner_queries_recv_buffer[source], source, mpi_utils::MSG_QUERY_SPARSE_INDICES,
                                               queries_requests);
         }
 
@@ -743,7 +743,7 @@ namespace dipha
               assert(full_to_sparse_indices_in_co_boundary.find(boundary[bd_idx]) != full_to_sparse_indices_in_co_boundary.end());
               assert(full_to_sparse_indices_in_co_boundary[boundary[bd_idx]] != -1);
               sparse_idx_boundaries.push_back(full_to_sparse_indices_in_co_boundary[boundary[bd_idx]]);
-              //std::cout << "add " << boundary[ bd_idx ] << " " 
+              //std::cout << "add " << boundary[ bd_idx ] << " "
               //          << full_to_sparse_indices_in_co_boundary[ boundary[ bd_idx ] ] << std::endl;
             }
             buffer[source].set(idx, sparse_idx_boundaries.begin(), sparse_idx_boundaries.end());
@@ -849,7 +849,7 @@ namespace dipha
           indices.push_back(bcoeff);
 
           /*
-          double guess_d = (k/2.718)*pow(idx,1./k);
+          dipha_real guess_d = (dipha_real)(k/2.718)*pow(idx,1./k);
 
           int64_t guess = (int64_t)ceil(guess_d);
 
@@ -978,13 +978,13 @@ namespace dipha
 
 
       template<typename InputIterator>
-      double diameter(InputIterator begin, InputIterator end) const
+      dipha_real diameter(InputIterator begin, InputIterator end) const
       {
         if (begin == end)
         {
           return 0.;
         }
-        double max = 0.;
+        dipha_real max = 0;
         InputIterator curr = begin;
         do
         {
@@ -1005,7 +1005,7 @@ namespace dipha
               std::cout << new_list_it->first << " " << *run << std::endl;
             }
             assert(new_list_it->first == *run);
-            double cdist = new_list_it->second;
+            dipha_real cdist = new_list_it->second;
             if (cdist > max)
             {
               max = cdist;

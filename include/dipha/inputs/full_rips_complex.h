@@ -35,7 +35,7 @@ namespace dipha
       int64_t _m_upper_dim;
       int64_t _m_no_points;
 
-      std::vector<std::vector<double> > _m_distance_matrix;
+      std::vector<std::vector<dipha_real> > _m_distance_matrix;
 
       // derived quantities
     protected:
@@ -69,7 +69,7 @@ namespace dipha
 
         int64_t matrix_size = _m_no_points * _m_no_points;
 
-        std::vector< double > distances;
+        std::vector< dipha_real > distances;
         MPI_Offset offset = preamble.size() * sizeof(int64_t);
         mpi_utils::file_read_at_vector(file, offset, matrix_size, distances);
 
@@ -92,7 +92,7 @@ namespace dipha
 
     public:
 
-      double get_distance(int64_t i, int64_t j) const
+      dipha_real get_distance(int64_t i, int64_t j) const
       {
         return _m_distance_matrix[i][j];
       }
@@ -124,7 +124,7 @@ namespace dipha
         return k;
       }
 
-      double _get_local_value(int64_t idx) const
+      dipha_real _get_local_value(int64_t idx) const
       {
         static std::vector<int64_t> points;
         points.clear();
@@ -340,19 +340,19 @@ namespace dipha
       }
 
       template<typename InputIterator>
-      double diameter(InputIterator begin, InputIterator end) const
+      dipha_real diameter(InputIterator begin, InputIterator end) const
       {
         if (begin == end)
         {
           return 0.;
         }
-        double max = 0.;
+        dipha_real max = 0.;
         InputIterator curr = begin;
         do
         {
           for (InputIterator run = curr + 1; run != end; run++)
           {
-            double cdist = _m_distance_matrix[*curr][*run];
+            dipha_real cdist = _m_distance_matrix[*curr][*run];
             if (cdist > max)
             {
               max = cdist;

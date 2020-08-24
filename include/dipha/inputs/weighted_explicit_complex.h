@@ -37,7 +37,7 @@ namespace dipha
     protected:
       std::vector< int64_t > offsets;
       std::vector< int64_t > entries;
-      std::vector< double > values;
+      std::vector< dipha_real > values;
       std::vector< int64_t > dims;
       boundary_type my_boundary_type;
       int64_t global_num_cells;
@@ -53,7 +53,7 @@ namespace dipha
 
       int64_t _get_local_dim(int64_t idx) const { return dims[idx - local_begin]; }
 
-      double _get_local_value(int64_t idx) const { return values[idx - local_begin]; }
+      dipha_real _get_local_value(int64_t idx) const { return values[idx - local_begin]; }
 
       void _get_local_boundary(int64_t idx, std::vector< int64_t >& boundary) const { _get_local_co_boundary(idx, false, boundary); }
 
@@ -62,8 +62,8 @@ namespace dipha
       int64_t _get_max_dim() const { return max_dim; }
 
       // Loads the weighted_cubical_complex from given file in binary format -- all symbols are 64 bit wide
-      // Format: file_types::DIPHA % file_types::WEIGHTED_BOUNDARY_MATRIX % boundary_type % num_cells (N) % max_dim % dim1 % ... 
-      //         % dimN % value1 % ... % valueN % offset1 % ... % offsetN % num_entries (M) % entry1 % ... % entryM 
+      // Format: file_types::DIPHA % file_types::WEIGHTED_BOUNDARY_MATRIX % boundary_type % num_cells (N) % max_dim % dim1 % ...
+      //         % dimN % value1 % ... % valueN % offset1 % ... % offsetN % num_entries (M) % entry1 % ... % entryM
       void _load_binary(MPI_File file,
                         int64_t upper_dim = std::numeric_limits< int64_t >::max())
       {
@@ -104,14 +104,14 @@ namespace dipha
       {
         if (!dual && my_boundary_type == boundary_type::COBOUNDARY)
         {
-          mpi_utils::error_printer_if_root() << "Primal computation not supported for this input file. " 
+          mpi_utils::error_printer_if_root() << "Primal computation not supported for this input file. "
                                              << "Please convert it first using the dualize utility.";
           MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
         }
 
         if (dual && my_boundary_type == boundary_type::BOUNDARY)
         {
-          mpi_utils::error_printer_if_root() << "Dual computation not supported for this input file. " 
+          mpi_utils::error_printer_if_root() << "Dual computation not supported for this input file. "
                                              << "Please convert it first using the dualize utility.";
           MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
         }

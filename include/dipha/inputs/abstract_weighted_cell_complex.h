@@ -46,15 +46,15 @@ namespace dipha
       // dimension of given cell
       int64_t get_local_dim(int64_t idx) const
       {
-        assert(idx >= element_distribution::get_local_begin(get_num_cells()) 
+        assert(idx >= element_distribution::get_local_begin(get_num_cells())
                && idx < element_distribution::get_local_end(get_num_cells()));
         return derived()._get_local_dim(idx);
       }
 
       // value of given cell
-      double get_local_value(int64_t idx) const
+      dipha_real get_local_value(int64_t idx) const
       {
-        assert(idx >= element_distribution::get_local_begin(get_num_cells()) 
+        assert(idx >= element_distribution::get_local_begin(get_num_cells())
                && idx < element_distribution::get_local_end(get_num_cells()));
         return derived()._get_local_value(idx);
       }
@@ -82,7 +82,7 @@ namespace dipha
       // boundary of given cell
       void get_local_boundary(int64_t idx, std::vector< int64_t >& boundary) const
       {
-        assert(idx >= element_distribution::get_local_begin(get_num_cells()) 
+        assert(idx >= element_distribution::get_local_begin(get_num_cells())
                && idx < element_distribution::get_local_end(get_num_cells()));
         boundary.clear();
         derived()._get_local_boundary(idx, boundary);
@@ -101,7 +101,7 @@ namespace dipha
       // coboundary of given cell
       void get_local_coboundary(int64_t idx, std::vector< int64_t >& coboundary) const
       {
-        assert(idx >= element_distribution::get_local_begin(get_num_cells()) 
+        assert(idx >= element_distribution::get_local_begin(get_num_cells())
                && idx < element_distribution::get_local_end(get_num_cells()));
         coboundary.clear();
         derived()._get_local_coboundary(idx, coboundary);
@@ -111,7 +111,7 @@ namespace dipha
       // functions that CAN be implemented by template parameter to improve performance
     public:
       void get_global_values(const std::vector< int64_t >& queries,
-                             std::vector< double >& answers) const
+                             std::vector< dipha_real >& answers) const
       {
         answers.clear();
         answers.reserve(queries.size());
@@ -126,7 +126,7 @@ namespace dipha
         derived()._get_global_dims(queries, answers);
       }
 
-      double get_max_value() const
+      dipha_real get_max_value() const
       {
         return derived()._get_max_value();
       }
@@ -134,7 +134,7 @@ namespace dipha
       // default implementations
     private:
       void _get_global_values(const std::vector< int64_t >& queries,
-                              std::vector< double >& answers) const
+                              std::vector< dipha_real >& answers) const
       {
 
         const int64_t global_num_cells = get_num_cells();
@@ -142,7 +142,7 @@ namespace dipha
         element_distribution::scatter_queries(queries, global_num_cells, queries_buffer);
 
         // process queries
-        std::vector< std::vector< double > > answers_buffer(mpi_utils::get_num_processes());
+        std::vector< std::vector< dipha_real > > answers_buffer(mpi_utils::get_num_processes());
         for (int source = 0; source < mpi_utils::get_num_processes(); source++)
         {
           for (const auto& query : queries_buffer[source])
@@ -182,17 +182,17 @@ namespace dipha
         _get_global_co_boundaries(queries, answers, true);
       }
 
-      double _get_max_value() const
+      dipha_real _get_max_value() const
       {
         const int64_t local_begin = element_distribution::get_local_begin(get_num_cells());
         const int64_t local_end = element_distribution::get_local_end(get_num_cells());
-        double local_max_value = std::numeric_limits< double >::lowest();
+        dipha_real local_max_value = std::numeric_limits< dipha_real >::lowest();
         for (int64_t idx = local_begin; idx < local_end; idx++)
         {
-          double value = get_local_value(idx);
+          dipha_real value = get_local_value(idx);
           local_max_value = value > local_max_value ? value : local_max_value;
         }
-        std::vector< double > max_value_per_rank;
+        std::vector< dipha_real > max_value_per_rank;
         mpi_utils::all_gather(local_max_value, max_value_per_rank);
         return *std::max_element(max_value_per_rank.begin(), max_value_per_rank.end());
       }

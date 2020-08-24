@@ -37,7 +37,7 @@ namespace dipha
 
       std::vector<int64_t> preamble;
       std::vector< int64_t > dims;
-      std::vector< double > values;
+      std::vector< dipha_real > values;
       std::vector< int64_t > offsets;
       std::vector< int64_t > entries;
       int64_t global_num_entries;

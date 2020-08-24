@@ -27,7 +27,7 @@ namespace dipha
   {
     /* file format: file_types::DIPHA % file_types::PERSISTENCE_DIAGRAM % global_num_pairs (N) % birth_dim_1 % birth_value_1
                     % death_value_1 % ... % birth_dim_N % birth_value_N % death_value_N
-                    (birth_values and death_values are of type double, the rest is int64_t) */
+                    (birth_values and death_values are of type dipha_real, the rest is int64_t) */
     template< typename Complex >
     void save_persistence_diagram(const std::string& filename,
                                   const inputs::abstract_weighted_cell_complex< Complex >& complex,
@@ -35,7 +35,7 @@ namespace dipha
                                   const data_structures::write_once_column_array& reduced_columns,
                                   bool dualized = false,
                                   int64_t upper_dim = std::numeric_limits< int64_t >::max(),
-                                  double upper_value = std::numeric_limits< double >::max(),
+                                  dipha_real upper_value = std::numeric_limits< dipha_real >::max(),
                                   bool without_top_dimension_essentials = true,
                                   bool sort_diagrams = false)
     {
@@ -50,7 +50,7 @@ namespace dipha
       MPI_Offset cur_file_size = preamble_length;
       MPI_File_set_size(file, cur_file_size);
 
-      typedef std::pair< int64_t, std::pair< double, double > > diagram_entry_type;
+      typedef std::pair< int64_t, std::pair< dipha_real, dipha_real > > diagram_entry_type;
 
       std::vector< diagram_entry_type > local_dims_and_pairs;
       std::vector< int64_t > birth_cell_queries;
@@ -61,26 +61,26 @@ namespace dipha
       std::vector< int64_t > death_value_queries;
       std::vector< int64_t > birth_value_queries;
       std::vector< int64_t > birth_dim_answers;
-      std::vector< double > birth_value_answers;
-      std::vector< double > death_value_answers;
+      std::vector< dipha_real > birth_value_answers;
+      std::vector< dipha_real > death_value_answers;
       std::vector< std::pair< int64_t, bool > > non_essential_cells;
 
       /// get maximum value of complex
-      double max_value = std::numeric_limits< double >::max();
-      if (upper_value == std::numeric_limits< double >::max())
+      dipha_real max_value = std::numeric_limits< dipha_real >::max();
+      if (upper_value == std::numeric_limits< dipha_real >::max())
       {
         max_value = complex.get_max_value();
       }
       else
       {
-        double local_max_value_smaller_than = std::numeric_limits< double >::lowest();
+        dipha_real local_max_value_smaller_than = std::numeric_limits< dipha_real >::lowest();
         for (int64_t idx = col_begin; idx < col_end; idx++)
         {
-          double value = complex.get_local_value(idx);
+          dipha_real value = complex.get_local_value(idx);
           if (value <= upper_value)
             local_max_value_smaller_than = value > local_max_value_smaller_than ? value : local_max_value_smaller_than;
         }
-        std::vector< double > max_value_smaller_than_per_rank;
+        std::vector< dipha_real > max_value_smaller_than_per_rank;
         mpi_utils::all_gather(local_max_value_smaller_than, max_value_smaller_than_per_rank);
         max_value = *std::max_element(max_value_smaller_than_per_rank.begin(), max_value_smaller_than_per_rank.end());
       }
@@ -162,8 +162,8 @@ namespace dipha
           if (!reduced_columns.empty(idx))
           {
             int64_t birth_dim = *iterator_of_birth_dim_answers++;
-            double birth_value = *iterator_of_birth_value_answers++;
-            double death_value = *iterator_of_death_value_answers++;
+            dipha_real birth_value = *iterator_of_birth_value_answers++;
+            dipha_real death_value = *iterator_of_death_value_answers++;
             if (birth_value != death_value && birth_value < max_value)
             {
               if (death_value <= max_value)
@@ -192,7 +192,7 @@ namespace dipha
           if (dim <= max_dim && (!without_top_dimension_essentials || dim < max_dim))
           {
             int64_t shifted_dim = -dim - 1;
-            double value = complex.get_local_value(idx);
+            dipha_real value = complex.get_local_value(idx);
             if (value <= max_value)
               local_dims_and_pairs.push_back(std::make_pair(shifted_dim, std::make_pair(value, max_value)));
           }

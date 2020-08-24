@@ -21,6 +21,8 @@ cmake_minimum_required(VERSION 3.4)
 
 project("Dipha")
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 set(CMAKE_BUILD_TYPE "Release")
 
 set(CMAKE_CXX_STANDARD 11)
@@ -40,19 +42,27 @@ FILE(GLOB dipha_input_includes "include/dipha/inputs/*.h")
 FILE(GLOB dipha_output_includes "include/dipha/outputs/*.h")
 FILE(GLOB dipha_algorithms_includes "include/dipha/algorithms/*.h")
 
-add_executable (dipha src/dipha.cpp ${all_dipha_includes})
-target_link_libraries(dipha ${MPI_LIBRARIES})
+foreach(real float double)
+    add_executable (dipha_${real} src/dipha.cpp ${all_dipha_includes})
+    target_link_libraries(dipha_${real} ${MPI_LIBRARIES})
+    target_compile_definitions(dipha_${real} PRIVATE DIPHA_REAL=${real})
 
-add_executable (dualize src/dualize.cpp)
-target_link_libraries(dualize ${MPI_LIBRARIES})
+    add_executable (dualize_${real} src/dualize.cpp)
+    target_link_libraries(dualize_${real} ${MPI_LIBRARIES})
+    target_compile_definitions(dualize_${real} PRIVATE DIPHA_REAL=${real})
 
-add_executable (create_phat_filtration src/create_phat_filtration.cpp)
-target_link_libraries(create_phat_filtration ${MPI_LIBRARIES})
+    add_executable (create_phat_filtration_${real} src/create_phat_filtration.cpp)
+    target_link_libraries(create_phat_filtration_${real} ${MPI_LIBRARIES})
+    target_compile_definitions(create_phat_filtration_${real} PRIVATE DIPHA_REAL=${real})
 
-add_executable (full_to_sparse_distance_matrix src/full_to_sparse_distance_matrix.cpp)
-target_link_libraries(full_to_sparse_distance_matrix ${MPI_LIBRARIES})
+    add_executable (full_to_sparse_distance_matrix_${real} src/full_to_sparse_distance_matrix.cpp)
+    target_link_libraries(full_to_sparse_distance_matrix_${real} ${MPI_LIBRARIES})
+    target_compile_definitions(full_to_sparse_distance_matrix_${real} PRIVATE DIPHA_REAL=${real})
 
-add_executable (diagram_to_text src/diagram_to_text.cpp include/dipha/file_types.h)
+    add_executable (diagram_to_text_${real} src/diagram_to_text.cpp include/dipha/file_types.h)
+    target_compile_definitions(diagram_to_text_${real} PRIVATE DIPHA_REAL=${real})
+endforeach()
+
 
 source_group(Header\ Files FILES ${dipha_general_includes})
 source_group(Header\ Files\\inputs FILES ${dipha_input_includes})
@@ -76,7 +86,7 @@ SET(TEST_DATA_DIR ${CMAKE_HOME_DIRECTORY}/test_data)
 
 macro(REGRESSION_TEST TEST_NAME UPPER_DIM INPUT)
     add_test(NAME create_primal_${TEST_NAME}
-         COMMAND ${MPIEXEC} -n ${NUM_PROCESSES} $<TARGET_FILE:dipha> --upper_dim ${UPPER_DIM} ${INPUT}.complex primal_${TEST_NAME}.DIPHA_TEST
+         COMMAND ${MPIEXEC} -n ${NUM_PROCESSES} $<TARGET_FILE:dipha_double> --upper_dim ${UPPER_DIM} ${INPUT}.complex primal_${TEST_NAME}.DIPHA_TEST
          WORKING_DIRECTORY ${TEST_DATA_DIR}
         )
 	add_test(NAME compare_primal_${TEST_NAME}
@@ -86,7 +96,7 @@ macro(REGRESSION_TEST TEST_NAME UPPER_DIM INPUT)
 	set_tests_properties(compare_primal_${TEST_NAME} PROPERTIES DEPENDS create_primal_${TEST_NAME})
 
 	add_test(NAME create_dual_${TEST_NAME}
-         COMMAND ${MPIEXEC} -n ${NUM_PROCESSES} $<TARGET_FILE:dipha> --dual --upper_dim ${UPPER_DIM} ${INPUT}.complex dual_${TEST_NAME}.DIPHA_TEST
+         COMMAND ${MPIEXEC} -n ${NUM_PROCESSES} $<TARGET_FILE:dipha_double> --dual --upper_dim ${UPPER_DIM} ${INPUT}.complex dual_${TEST_NAME}.DIPHA_TEST
          WORKING_DIRECTORY ${TEST_DATA_DIR}
         )
 	add_test(NAME compare_dual_${TEST_NAME}
@@ -118,7 +128,7 @@ REGRESSION_TEST(sphere_1_0.3 2 sphere_3_32_0.3)
 
 
 add_test(NAME create_dualize
-         COMMAND ${MPIEXEC} -n ${NUM_PROCESSES} $<TARGET_FILE:dualize> primal_explicit.complex dualize.DIPHA_TEST
+         COMMAND ${MPIEXEC} -n ${NUM_PROCESSES} $<TARGET_FILE:dualize_double> primal_explicit.complex dualize.DIPHA_TEST
          WORKING_DIRECTORY ${TEST_DATA_DIR}
         )
 add_test(NAME compare_dualize
@@ -128,7 +138,7 @@ add_test(NAME compare_dualize
 set_tests_properties(compare_dualize PROPERTIES DEPENDS create_dualize)
 
 add_test(NAME create_primal_explicit
-         COMMAND ${MPIEXEC} -n ${NUM_PROCESSES} $<TARGET_FILE:dipha> primal_explicit.complex primal_explicit.DIPHA_TEST
+         COMMAND ${MPIEXEC} -n ${NUM_PROCESSES} $<TARGET_FILE:dipha_double> primal_explicit.complex primal_explicit.DIPHA_TEST
          WORKING_DIRECTORY ${TEST_DATA_DIR}
         )
 add_test(NAME compare_primal_explicit
@@ -138,7 +148,7 @@ add_test(NAME compare_primal_explicit
 set_tests_properties(compare_primal_explicit PROPERTIES DEPENDS create_primal_explicit)
 
 add_test(NAME create_dual_explicit
-         COMMAND ${MPIEXEC} -n ${NUM_PROCESSES} $<TARGET_FILE:dipha> --dual dual_explicit.complex dual_explicit.DIPHA_TEST
+         COMMAND ${MPIEXEC} -n ${NUM_PROCESSES} $<TARGET_FILE:dipha_double> --dual dual_explicit.complex dual_explicit.DIPHA_TEST
          WORKING_DIRECTORY ${TEST_DATA_DIR}
         )
 add_test(NAME compare_dual_explicit

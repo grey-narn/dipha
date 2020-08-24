@@ -42,7 +42,7 @@ namespace dipha
       {
         int64_t cur_dim = dualize ? idx : max_dim - idx;
         data_structures::flat_column_stack unreduced_columns;
-        DIPHA_MACROS_BENCHMARK(generate_unreduced_columns(complex, filtration_to_cell_map, cell_to_filtration_map, 
+        DIPHA_MACROS_BENCHMARK(generate_unreduced_columns(complex, filtration_to_cell_map, cell_to_filtration_map,
                                                           cur_dim, dualize, unreduced_columns); );
         DIPHA_MACROS_BENCHMARK(reduction_kernel(complex.get_num_cells(), unreduced_columns, reduced_columns); );
         MPI_Barrier(MPI_COMM_WORLD);

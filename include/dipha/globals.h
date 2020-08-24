@@ -37,7 +37,7 @@ namespace dipha
     int64_t bytes_received = 0;
 
     // accumulated running time for reduction_kernel
-    double reduction_kernel_running_time = 0;
+    dipha_real reduction_kernel_running_time = 0;
 
     // enable benchmarking - will decrease performance a bit due to more mpi_barriers
     bool benchmark = false;

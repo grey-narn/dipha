@@ -30,7 +30,7 @@ namespace dipha
                                  data_structures::write_once_column_array& reduced_columns)
     {
       const int64_t local_begin = element_distribution::get_local_begin(global_num_cols);
-      const double reduction_kernel_start = MPI_Wtime();
+      const dipha_real reduction_kernel_start = (dipha_real)MPI_Wtime();
       const int num_processes = mpi_utils::get_num_processes();
       const int rank = mpi_utils::get_rank();
 

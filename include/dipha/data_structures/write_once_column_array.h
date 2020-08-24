@@ -55,10 +55,10 @@ namespace dipha
       }
 
       std::vector< int64_t >::const_iterator begin(int64_t idx) const {
-        return flat_column_entries.cbegin() + column_begin[idx - local_begin]; 
+        return flat_column_entries.cbegin() + column_begin[idx - local_begin];
       }
 
-      std::vector< int64_t >::const_iterator end(int64_t idx) const { 
+      std::vector< int64_t >::const_iterator end(int64_t idx) const {
         return flat_column_entries.cbegin() + column_end[idx - local_begin]; };
 
       const int64_t& back(int64_t idx) const { return *(end(idx) - 1); }

@@ -44,6 +44,7 @@ along with DIPHA.  If not, see <http://www.gnu.org/licenses/>. */
 #include <psort-1.0/src/psort.h>
 
 // DIPHA includes
+#include <dipha/real_type.h>
 #include <dipha/globals.h>
 #include <dipha/mpi_utils.h>
 #include <dipha/element_distribution.h>

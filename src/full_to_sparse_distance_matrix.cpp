@@ -29,7 +29,7 @@ void print_help_and_exit()
   std::exit(-1);
 }
 
-void parse_command_line(int argc, char** argv, double& upper_value, std::string& input_filename, std::string& output_filename)
+void parse_command_line(int argc, char** argv, dipha::dipha_real& upper_value, std::string& input_filename, std::string& output_filename)
 {
   if (argc < 3)
     print_help_and_exit();
@@ -46,12 +46,12 @@ void parse_command_line(int argc, char** argv, double& upper_value, std::string&
 }
 
 
-void create_sparse_representation(const std::string& input_filename, double upper_value, const std::string& output_filename)
+void create_sparse_representation(const std::string& input_filename, dipha::dipha_real upper_value, const std::string& output_filename)
 {
   dipha::inputs::full_rips_complex complex;
   complex.load_binary(input_filename, 1);
 
-  std::vector< std::vector< std::pair<int64_t, double> > > sparse_matrix;
+  std::vector< std::vector< std::pair<int64_t, dipha::dipha_real> > > sparse_matrix;
 
   int64_t matrix_size = complex.number_of_points();
 
@@ -63,7 +63,7 @@ void create_sparse_representation(const std::string& input_filename, double uppe
     for (int64_t cols = 0; cols < matrix_size; cols++)
     {
 
-      double distance = complex.get_distance(rows, cols);
+      dipha::dipha_real distance = complex.get_distance(rows, cols);
 
       if (rows != cols && distance <= 2 * upper_value)
       {
@@ -98,7 +98,7 @@ void create_sparse_representation(const std::string& input_filename, double uppe
     int64_t row_size = sparse_matrix[cur_row].size();
     for (int64_t cur_col_idx = 0; cur_col_idx < row_size; cur_col_idx++)
     {
-      output_stream.write((char*)&(sparse_matrix[cur_row][cur_col_idx].second), sizeof(double));
+      output_stream.write((char*)&(sparse_matrix[cur_row][cur_col_idx].second), sizeof(dipha::dipha_real));
     }
   }
 
@@ -113,7 +113,7 @@ int main(int argc, char** argv)
 
   std::string input_filename; // name of file that contains the weighted cell complex
   std::string output_filename; // name of file that will contain the PHAT filtration
-  double upper_value = std::numeric_limits< double >::max();
+  dipha::dipha_real upper_value = std::numeric_limits< dipha::dipha_real >::max();
   parse_command_line(argc, argv, upper_value, input_filename, output_filename);
 
   if (dipha::file_types::get_file_type(input_filename) != dipha::file_types::DISTANCE_MATRIX)

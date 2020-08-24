@@ -92,7 +92,7 @@ int main(int argc, char** argv)
   MPI_Init(&argc, &argv);
 
   // take time at beggining of execution
-  double time_at_start = MPI_Wtime();
+  dipha::dipha_real time_at_start = (dipha::dipha_real)MPI_Wtime();
 
   std::string input_filename; // name of file that contains the weighted cell complex
   std::string output_filename; // name of file that will contain the persistence diagram
@@ -151,13 +151,13 @@ int main(int argc, char** argv)
     std::vector< int64_t > peak_mem_per_rank(dipha::mpi_utils::get_num_processes());
     MPI_Gather(&peak_mem, 1, MPI_LONG_LONG, peak_mem_per_rank.data(), 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
     dipha::mpi_utils::cout_if_root() << std::endl << "Overall peak mem in GB of all ranks: " << std::endl;
-    dipha::mpi_utils::cout_if_root() << (double)*std::max_element(peak_mem_per_rank.begin(), peak_mem_per_rank.end()) / 1024.0
+    dipha::mpi_utils::cout_if_root() << (dipha::dipha_real)*std::max_element(peak_mem_per_rank.begin(), peak_mem_per_rank.end()) / 1024.0
                                      << std::endl;
 
     dipha::mpi_utils::cout_if_root() << std::endl << "Individual peak mem in GB of per rank: " << std::endl;
     for (int64_t peak_mem : peak_mem_per_rank)
     {
-      dipha::mpi_utils::cout_if_root() << (double)peak_mem / 1024.0 << std::endl;
+      dipha::mpi_utils::cout_if_root() << (dipha::dipha_real)peak_mem / 1024.0 << std::endl;
     }
 
     std::vector< int64_t > bytes_received_per_rank(dipha::mpi_utils::get_num_processes());
@@ -166,12 +166,12 @@ int main(int argc, char** argv)
     dipha::mpi_utils::cout_if_root() << std::endl << "Maximal communication traffic (without sorting) in GB between any pair of nodes:"
                                      << std::endl;
     const int64_t max_num_MB_traffic = *std::max_element(bytes_received_per_rank.begin(), bytes_received_per_rank.end()) >> 20;
-    dipha::mpi_utils::cout_if_root() << std::setprecision(1) << (double)(max_num_MB_traffic) / 1024.0 << std::endl;
+    dipha::mpi_utils::cout_if_root() << std::setprecision(1) << (dipha::dipha_real)(max_num_MB_traffic) / 1024.0 << std::endl;
 
     dipha::mpi_utils::cout_if_root() << std::endl << "Total communication traffic (without sorting) in GB between all pairs of nodes:"
                                      << std::endl;
     const int64_t total_num_MB_traffic = std::accumulate(bytes_received_per_rank.begin(), bytes_received_per_rank.end(), 0LL) >> 20;
-    dipha::mpi_utils::cout_if_root() << std::setprecision(1) << (double)(total_num_MB_traffic) / 1024.0 << std::endl;
+    dipha::mpi_utils::cout_if_root() << std::setprecision(1) << (dipha::dipha_real)(total_num_MB_traffic) / 1024.0 << std::endl;
   }
 
   MPI_Finalize();

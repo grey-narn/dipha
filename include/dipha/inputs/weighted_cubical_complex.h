@@ -33,7 +33,7 @@ namespace dipha
       // defining state of the object
     protected:
       std::vector< int64_t > lattice_resolution;
-      std::vector< double > vertex_values;
+      std::vector< dipha_real > vertex_values;
 
       // derived quantities
     protected:
@@ -64,7 +64,7 @@ namespace dipha
         return cell_dim;
       }
 
-      double _get_local_value(int64_t idx) const
+      dipha_real _get_local_value(int64_t idx) const
       {
         static std::vector< int64_t > temp_tuple;
         index_to_tuple(idx, temp_tuple);
@@ -77,14 +77,14 @@ namespace dipha
 
         static std::vector< int64_t > vertex_tuple;
         vertex_tuple.clear();
-        double max_vertex_value = std::numeric_limits< double >::lowest();
+        dipha_real max_vertex_value = std::numeric_limits< dipha_real >::lowest();
         int64_t num_vertices = 2 << target_dimensions.size();
         for (int64_t k = 0; k < num_vertices; k++)
         {
           vertex_tuple = temp_tuple;
           for (int64_t j = 0; j < (int64_t)target_dimensions.size(); j++)
             vertex_tuple[target_dimensions[j]] += -1 + 2 * (k / (2 << j) % 2 == 0);
-          double vertex_value = vertex_values[vertex_tuple_to_lattice_index(vertex_tuple) - vertex_values_begin];
+          dipha_real vertex_value = vertex_values[vertex_tuple_to_lattice_index(vertex_tuple) - vertex_values_begin];
           max_vertex_value = vertex_value > max_vertex_value ? vertex_value : max_vertex_value;
         }
 
@@ -135,7 +135,7 @@ namespace dipha
       }
 
       // Loads the weighted_cubical_complex from given file in binary format -- all symbols are 64 bit wide
-      // Format: file_types::DIPHA % file_types::IMAGE_DATA % num_vertices % max_dim % lattice_resolution_1 
+      // Format: file_types::DIPHA % file_types::IMAGE_DATA % num_vertices % max_dim % lattice_resolution_1
       //         % ... % lattice_resolution_dim % value_1 % ... % value_num_vertices
       void _load_binary(MPI_File file,
                         int64_t upper_dim = std::numeric_limits< int64_t >::max())
@@ -197,12 +197,12 @@ namespace dipha
 
       // overide default implemantations in abstract_weighted_cell_complex to improve performance
     protected:
-      double _get_max_value() const
+      dipha_real _get_max_value() const
       {
         const int64_t local_begin = element_distribution::get_local_begin(get_num_cells());
         const int64_t local_end = element_distribution::get_local_end(get_num_cells());
-        double local_max_value = *std::max_element(vertex_values.begin(), vertex_values.end());
-        std::vector< double > max_value_per_rank;
+        dipha_real local_max_value = *std::max_element(vertex_values.begin(), vertex_values.end());
+        std::vector< dipha_real > max_value_per_rank;
         mpi_utils::all_gather(local_max_value, max_value_per_rank);
         return *std::max_element(max_value_per_rank.begin(), max_value_per_rank.end());
       }
