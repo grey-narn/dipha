@@ -61,6 +61,10 @@ foreach(real float double)
 
     add_executable (diagram_to_text_${real} src/diagram_to_text.cpp include/dipha/file_types.h)
     target_compile_definitions(diagram_to_text_${real} PRIVATE DIPHA_REAL=${real})
+
+    add_executable (diagram_to_numpy_${real} src/diagram_to_numpy.cpp include/dipha/file_types.h)
+    target_link_libraries(diagram_to_numpy_${real} cnpy)
+    target_compile_definitions(diagram_to_numpy_${real} PRIVATE DIPHA_REAL=${real})
 endforeach()
 
 

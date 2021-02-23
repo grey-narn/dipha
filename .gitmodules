@@ -1,0 +1,3 @@
+[submodule "externals/cnpy"]
+	path = externals/cnpy
+	url = git@github.com:rogersce/cnpy.git
