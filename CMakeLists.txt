@@ -42,6 +42,8 @@ FILE(GLOB dipha_input_includes "include/dipha/inputs/*.h")
 FILE(GLOB dipha_output_includes "include/dipha/outputs/*.h")
 FILE(GLOB dipha_algorithms_includes "include/dipha/algorithms/*.h")
 
+add_subdirectory(externals/cnpy)
+
 foreach(real float double)
     add_executable (dipha_${real} src/dipha.cpp ${all_dipha_includes})
     target_link_libraries(dipha_${real} ${MPI_LIBRARIES})
