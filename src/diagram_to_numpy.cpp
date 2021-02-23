@@ -15,13 +15,13 @@ using FlattenedDgm = std::vector<dipha_real>;
 
 int main(int argc, char** argv)
 {
-    if (argc != 3) {
-        std::cerr << "Usage: " << argv[0] << " dipha-diagram out-diagram" << std::endl;
+    if (argc != 3 && argc != 2) {
+        std::cerr << "Usage: " << argv[0] << " dipha-diagram [out-diagram]" << std::endl;
         return -1;
     }
 
     std::string dgm_in = argv[1];
-    std::string dgm_out = argv[2];
+    std::string dgm_out = (argc == 3) ? argv[2] : dgm_in;
 
     std::ifstream in(dgm_in, std::ios::binary);
 
@@ -68,7 +68,7 @@ int main(int argc, char** argv)
     for(const auto& dim_dgm : dim_to_diagram) {
         if (dim_dgm.second.size() == 0)
             continue;
-        std::string dgm_fname = dgm_out + "." + std::to_string(dim_dgm.first);
+        std::string dgm_fname = dgm_out + "." + std::to_string(dim_dgm.first) + ".npy";
         const FlattenedDgm& dgm = dim_dgm.second;
         cnpy::npy_save(dgm_fname, &dgm[0], {dgm.size(), 2}, "w");
     }
