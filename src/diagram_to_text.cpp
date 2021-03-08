@@ -53,6 +53,8 @@ int main(int argc, char** argv)
 
     std::unordered_map<int64_t, Dgm> dim_to_diagram;
 
+    constexpr dipha_real min_persistence = (sizeof(dipha_real) == sizeof(float)) ? 1e-32 : 1e-200;
+
     for(int64_t pair_index = 0; pair_index < n_pairs; ++pair_index) {
         int64_t dim;
         dipha_real birth, death;
@@ -60,7 +62,9 @@ int main(int argc, char** argv)
         in.read(reinterpret_cast<char*>(&dim), sizeof(int64_t));
         in.read(reinterpret_cast<char*>(&birth), sizeof(dipha_real));
         in.read(reinterpret_cast<char*>(&death), sizeof(dipha_real));
-        dim_to_diagram[dim].emplace_back(birth, death);
+
+        if (!(fabs(birth - death) < min_persistence))
+            dim_to_diagram[dim].emplace_back(birth, death);
         //std::cout << "read pair in dim " << dim << " (" << birth << ", " << death << ")" << std::endl;
     }
 

@@ -1,6 +1,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <cmath>
 #include <unordered_map>
 #include <utility>
 
@@ -54,6 +55,8 @@ int main(int argc, char** argv)
 
     std::unordered_map<int64_t, FlattenedDgm> dim_to_diagram;
 
+    constexpr dipha_real min_persistence = (sizeof(dipha_real) == sizeof(float)) ? 1e-32 : 1e-200;
+
     for(int64_t pair_index = 0; pair_index < n_pairs; ++pair_index) {
         int64_t dim;
         dipha_real birth, death;
@@ -61,16 +64,24 @@ int main(int argc, char** argv)
         in.read(reinterpret_cast<char*>(&dim), sizeof(int64_t));
         in.read(reinterpret_cast<char*>(&birth), sizeof(dipha_real));
         in.read(reinterpret_cast<char*>(&death), sizeof(dipha_real));
-        dim_to_diagram[dim].emplace_back(birth);
-        dim_to_diagram[dim].emplace_back(death);
+        if (!(fabs(birth - death) < min_persistence)) {
+            dim_to_diagram[dim].emplace_back(birth);
+            dim_to_diagram[dim].emplace_back(death);
+        }
     }
 
     for(const auto& dim_dgm : dim_to_diagram) {
         if (dim_dgm.second.size() == 0)
             continue;
+
+        std::cout << "Saving dimension " << dim_dgm.first << ", diagram with " << dim_dgm.second.size() / 2 << " points." << std::endl;
+
+        if (dim_dgm.second.size() % 2)
+            throw std::runtime_error("Flattened diagram must have even size");
+
         std::string dgm_fname = dgm_out + "." + std::to_string(dim_dgm.first) + ".npy";
         const FlattenedDgm& dgm = dim_dgm.second;
-        cnpy::npy_save(dgm_fname, &dgm[0], {dgm.size(), 2}, "w");
+        cnpy::npy_save(dgm_fname, &dgm[0], {dgm.size() / 2, 2}, "w");
     }
 
     return 0;
